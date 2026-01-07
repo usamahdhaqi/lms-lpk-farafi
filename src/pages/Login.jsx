@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, UserPlus, Mail, Lock, User, Phone } from 'lucide-react';
+import { authService } from '../api/authService';
 
 export default function Login() {
   const [isRegister, setIsRegister] = useState(false);
@@ -16,27 +17,24 @@ export default function Login() {
     password: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Simulasi Login/Registrasi (Fase 1)
-    // Dalam produksi, di sini Anda memanggil API backend
-    const userData = {
-      name: isRegister ? formData.name : "Siswa LPK Farafi",
-      email: formData.email,
-      role: 'siswa' // Sesuai Arsitektur Peran Pengguna 
-    };
+    try {
+        const response = isRegister 
+            ? await authService.register(formData) 
+            : await authService.login({ email: formData.email, password: formData.password });
 
-    login(userData);
-    
-    // Jika registrasi, arahkan ke katalog untuk pilih kursus
-    // Jika login biasa, arahkan ke dashboard
-    if (isRegister) {
-      navigate('/');
-    } else {
-      navigate('/dashboard');
-    }
-  };
+            // Simpan token ke localStorage (SRS Seksi 4.1)
+            localStorage.setItem('token', response.data.token);
+            
+            // Masukkan data user asli dari database ke Context
+            login(response.data.user);
+            
+            navigate(response.data.user.role === 'admin' ? '/admin' : '/dashboard');
+        } catch (error) {
+            alert(error.response?.data?.message || "Terjadi kesalahan autentikasi");
+        }
+    };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Timer, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { quizService } from '../../api/quizService';
 
 export default function QuizPage() {
   const { courseId } = useParams();
@@ -46,22 +47,27 @@ export default function QuizPage() {
     setAnswers({ ...answers, [currentQuestion]: optionIndex });
   };
 
-  const finishQuiz = () => {
-    // Penilaian Otomatis (User Flow Fase 3)
+  const finishQuiz = async () => {
     let correctCount = 0;
     questions.forEach((q, index) => {
-      if (answers[index] === q.correct) correctCount++;
+        if (answers[index] === q.correct) correctCount++;
     });
     
     const finalScore = Math.round((correctCount / questions.length) * 100);
     setScore(finalScore);
     setCurrentStep('result');
 
-    // Backend Logic: Update is_passed jika skor >= 75
-    if (finalScore >= 75) {
-      console.log("Status: Completed & is_passed = true");
-    }
-  };
+    try {
+        // 2. Bandingkan skor dengan min_score (75) di Backend
+        await quizService.submitResult(courseId, finalScore);
+        
+            if (finalScore >= 75) {
+            console.log("Status di MySQL: is_passed = true");
+            }
+        } catch (error) {
+            console.error("Gagal mengirim nilai kuis:", error);
+        }
+    };
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
