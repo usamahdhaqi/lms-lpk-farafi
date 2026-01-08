@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://api.lpkfarafi.com'; // Sesuaikan dengan domain backend Anda
+const API_BASE_URL = 'http://localhost:5000'; // Sesuaikan dengan domain backend Anda
 
 const api = axios.create({
   baseURL: API_BASE_URL,
