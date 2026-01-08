@@ -1,26 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-const courses = [
-  { id: 'comp-001', title: 'Pelatihan Operator Komputer Dasar', price: 'Rp 500.000', img: '/img/komputer.jpg' },
-  { id: 'hp-001', title: 'Teknisi Handphone', price: 'Rp 750.000', img: '/img/hp.jpg' },
-];
+import api from '../api/api';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user } = useAuth(); // Ambil status login dari context
+  const { user } = useAuth();
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Ambil Katalog Kursus dari Database
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await api.get('/api/courses'); // Endpoint backend
+        setCourses(response.data);
+      } catch (error) {
+        console.error("Gagal memuat kursus:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   const handleCourseSelection = (courseId) => {
     if (!user) {
-      // Jika belum login, arahkan ke login dengan membawa informasi kursus yang dipilih
-      // Gunakan state agar setelah login bisa kembali ke kursus ini
       navigate('/login', { state: { selectedCourse: courseId } });
     } else {
-      // Jika sudah login, langsung arahkan ke halaman pendaftaran/pembayaran kursus tersebut
       navigate('/register', { state: { courseId: courseId } });
     }
   };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-bold">Memuat Katalog LPK Farafi...</div>;
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -44,15 +56,18 @@ export default function Landing() {
           <p className="text-slate-500">Mulai langkah karir profesional Anda bersama LPK Farafi.</p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {courses.map((course) => (
             <div key={course.id} className="bg-white p-6 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 group hover:border-blue-500 transition-all duration-300">
-              <div className="h-48 bg-slate-200 rounded-[1.5rem] mb-6 overflow-hidden">
-                {/* Image Placeholder */}
-                <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold italic">Cover Pelatihan</div>
+              <div className="h-48 bg-slate-200 rounded-[1.5rem] mb-6 overflow-hidden flex items-center justify-center text-slate-400 font-bold italic">
+                {/* Visual Placeholder */}
+                Image Pelatihan
               </div>
               <h3 className="font-bold text-xl text-slate-800 mb-2">{course.title}</h3>
-              <p className="text-blue-600 font-black text-2xl mb-6">{course.price}</p>
+              <p className="text-slate-500 text-sm mb-4 line-clamp-2">{course.description}</p>
+              <p className="text-blue-600 font-black text-2xl mb-6">
+                Rp {Number(course.price).toLocaleString('id-ID')}
+              </p>
               
               <button 
                 onClick={() => handleCourseSelection(course.id)}
