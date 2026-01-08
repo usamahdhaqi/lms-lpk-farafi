@@ -16,8 +16,8 @@ export default function DashboardLayout() {
     ? [{ path: '/admin', label: 'Admin Panel', icon: <ShieldCheck size={20} /> }]
     : [
         { path: '/dashboard', label: 'Kursus Saya', icon: <BookOpen size={20} /> },
-        { path: '/profile', label: 'Profil Saya', icon: <User size={20} /> },
-        { path: '/certificates', label: 'Sertifikat', icon: <Award size={20} /> },
+        { path: '/dashboard/profile', label: 'Profil Saya', icon: <User size={20} /> },
+        { path: '/dashboard/certificates', label: 'Sertifikat', icon: <Award size={20} /> },
       ];
 
   const handleLogout = () => {
