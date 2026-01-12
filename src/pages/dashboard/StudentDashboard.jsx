@@ -7,7 +7,8 @@ import {
   Loader2, 
   Clock, 
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Award
 } from 'lucide-react';
 import api from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
@@ -18,9 +19,11 @@ export default function StudentDashboard() {
   const [myCourses, setMyCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Ambil data kursus milik siswa dari Database
   useEffect(() => {
     const fetchMyCourses = async () => {
       try {
+        // Backend sudah menghitung persentase di tabel enrollments
         const response = await api.get(`/api/enrollments/user/${user.id}`);
         setMyCourses(response.data);
       } catch (error) {
@@ -30,13 +33,13 @@ export default function StudentDashboard() {
       }
     };
     if (user) fetchMyCourses();
-  }, [user]);
+}, [user]);
 
   if (loading) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
         <Loader2 className="animate-spin text-blue-600" size={40} />
-        <p className="font-bold text-slate-500 animate-pulse">Menghubungkan ke database LPK Farafi...</p>
+        <p className="font-bold text-slate-500 animate-pulse">Memuat dashboard Anda...</p>
       </div>
     );
   }
@@ -47,10 +50,12 @@ export default function StudentDashboard() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">Kursus Saya</h1>
-          <p className="text-slate-500 mt-1">Selamat datang kembali, <span className="text-blue-600 font-bold">{user?.name}</span>!</p>
+          <p className="text-slate-500 mt-1">
+            Selamat datang kembali, <span className="text-blue-600 font-bold">{user?.name}</span>!
+          </p>
         </div>
         
-        {/* MODIFIKASI: Tombol ini hanya muncul jika SUDAH ada kursus */}
+        {/* Tombol Muncul hanya jika sudah punya kursus */}
         {myCourses.length > 0 && (
           <button 
             onClick={() => navigate('/')} 
@@ -65,7 +70,7 @@ export default function StudentDashboard() {
       {/* Grid Kursus */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         
-        {/* MODIFIKASI: Card ini hanya muncul jika BELUM ada kursus (myCourses kosong) */}
+        {/* Card Ambil Pelatihan Muncul hanya jika belum ada kursus sama sekali */}
         {myCourses.length === 0 && (
           <div 
             onClick={() => navigate('/')}
@@ -76,7 +81,7 @@ export default function StudentDashboard() {
             </div>
             <h3 className="font-black text-xl text-slate-800">Ambil Pelatihan</h3>
             <p className="text-sm text-slate-500 mt-2 px-4 leading-relaxed">
-              Anda belum memiliki kursus aktif. Pilih pelatihan untuk memulai belajar.
+              Anda belum memiliki kursus aktif. Pilih pelatihan untuk memulai belajar dan dapatkan sertifikat.
             </p>
             <div className="mt-8 flex items-center gap-2 text-blue-600 font-bold text-sm bg-blue-50 px-4 py-2 rounded-full">
               Lihat Katalog <ArrowRight size={16} />
@@ -95,7 +100,7 @@ export default function StudentDashboard() {
                   : 'bg-amber-500 text-white animate-pulse'
                 }`}>
                   {item.payment_status === 'paid' ? <CheckCircle size={12}/> : <Clock size={12}/>}
-                  {item.payment_status === 'paid' ? 'Aktif' : 'Menunggu Aktivasi'}
+                  {item.payment_status === 'paid' ? 'Aktif' : 'Menunggu Verifikasi'}
                 </span>
               </div>
               
@@ -108,11 +113,13 @@ export default function StudentDashboard() {
               <h3 className="font-black text-xl text-slate-800 mb-1 line-clamp-2 leading-tight min-h-[3.5rem] group-hover:text-blue-600 transition-colors">
                 {item.title}
               </h3>
-              <p className="text-sm text-slate-400 mb-8 font-medium">Instruktur: <span className="text-slate-600">{item.instructor || 'Tim LPK Farafi'}</span></p>
+              <p className="text-sm text-slate-400 mb-8 font-medium italic">
+                Instruktur: <span className="text-slate-600">{item.instructor || 'Tim LPK Farafi'}</span>
+              </p>
               
               {item.payment_status === 'paid' ? (
                 <div className="space-y-3 mb-8">
-                  <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                  <div className="flex justify-between text-[11px] font-black text-slate-500 uppercase tracking-widest">
                     <span>Progres Belajar</span>
                     <span className="text-blue-600">{item.progress_percentage || 0}%</span>
                   </div>
@@ -122,16 +129,22 @@ export default function StudentDashboard() {
                       style={{ width: `${item.progress_percentage || 0}%` }}
                     ></div>
                   </div>
+                  {item.progress_percentage === 100 && (
+                    <p className="text-[10px] text-green-600 font-bold flex items-center gap-1 mt-2">
+                      <Award size={12} /> Selamat! Anda telah menyelesaikan materi.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3">
                   <AlertCircle size={20} className="text-amber-500 shrink-0" />
                   <p className="text-[11px] text-amber-700 leading-relaxed italic">
-                    Pembayaran Anda sedang dalam proses verifikasi oleh Admin. Materi akan terbuka otomatis setelah disetujui.
+                    Pembayaran Anda sedang diverifikasi. Akses materi akan terbuka otomatis setelah disetujui Admin.
                   </p>
                 </div>
               )}
 
+              {/* Tombol Aksi Dinamis */}
               <button 
                 disabled={item.payment_status !== 'paid'}
                 onClick={() => navigate(`/dashboard/course/${item.course_id}`)}
@@ -149,6 +162,18 @@ export default function StudentDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Footer bantuan jika user bingung */}
+      {myCourses.length > 0 && (
+        <div className="mt-12 p-6 bg-blue-50 rounded-[2rem] border border-blue-100 flex items-center justify-between">
+          <p className="text-sm text-blue-700 font-medium px-4">
+            Butuh bantuan terkait kursus atau sertifikat? 
+          </p>
+          <button className="bg-white text-blue-600 px-6 py-2 rounded-xl font-bold text-xs shadow-sm hover:bg-blue-600 hover:text-white transition">
+            Hubungi Admin
+          </button>
+        </div>
+      )}
     </div>
   );
 }
