@@ -33,13 +33,21 @@ export default function QuizPage() {
 
   // Logika Timer (SRS 4.2: Performa & Batasan Waktu)
   useEffect(() => {
-    if (currentStep === 'ongoing' && timeLeft > 0) {
-      const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-      return () => clearInterval(timer);
-    } else if (timeLeft === 0) {
-      finishQuiz();
-    }
-  }, [currentStep, timeLeft]);
+    const fetchQuestions = async () => {
+        try {
+            const res = await api.get(`/api/quiz/${courseId}`);
+            // Mapping data dari DB ke format State
+            const formatted = res.data.map(q => ({
+                id: q.id,
+                question: q.question,
+                options: [q.option_a, q.option_b, q.option_c, q.option_d],
+                correct: q.correct_option
+            }));
+            setQuestions(formatted);
+        } catch (err) { console.error("Gagal ambil soal"); }
+    };
+    fetchQuestions();
+  }, [courseId]);
 
   const startQuiz = () => setCurrentStep('ongoing');
 
