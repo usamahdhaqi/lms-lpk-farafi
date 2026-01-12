@@ -149,13 +149,6 @@ export default function StudentDashboard() {
           </div>
         ))}
       </div>
-
-      {/* Tampilan jika benar-benar kosong */}
-      {myCourses.length === 0 && (
-        <div className="bg-white rounded-[3rem] p-10 text-center border border-slate-100 shadow-sm mt-4">
-           <p className="text-slate-400 font-medium italic">Dashboard Anda masih kosong.</p>
-        </div>
-      )}
     </div>
   );
 }
