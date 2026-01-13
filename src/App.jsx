@@ -1,38 +1,63 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+
+// Import Layouts
 import DashboardLayout from './layouts/DashboardLayout';
 
-// Pages
+// Import Pages (Fase Umum)
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+
+// Import Pages (Siswa)
 import StudentDashboard from './pages/dashboard/StudentDashboard';
 import CourseContent from './pages/learning/CourseContent';
 import QuizPage from './pages/learning/QuizPage';
 import StudentProfile from './pages/dashboard/StudentProfile';
 import CertificatePage from './pages/dashboard/CertificatePage';
+
+// Import Pages (Instruktur)
+import InstructorDashboard from './pages/instructor/InstructorDashboard';
+// import InstructorCourses from './pages/instructor/InstructorCourses'; // Opsional jika sudah ada
+// import StudentMonitoring from './pages/instructor/StudentMonitoring'; // Opsional jika sudah ada
+
+// Import Pages (Admin)
 import AdminDashboard from './pages/admin/AdminDashboard';
 
-// --- NEW INSTRUCTOR PAGES ---
-import InstructorDashboard from './pages/instructor/InstructorDashboard';
-
+/**
+ * Proteksi Rute Siswa: 
+ * Hanya mengizinkan role 'siswa'. Jika instruktur/admin nyasar ke sini, 
+ * mereka diredirect ke dashboard masing-masing.
+ */
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/login" />;
-};
-
-const AdminRoute = ({ children }) => {
-  const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
-  return user.role === 'admin' ? children : <Navigate to="/dashboard" />;
+  
+  if (user.role === 'instruktur') return <Navigate to="/instructor" />;
+  if (user.role === 'admin') return <Navigate to="/admin" />;
+  
+  return children;
 };
 
-// --- NEW INSTRUCTOR ROUTE PROTECTION ---
+/**
+ * Proteksi Rute Instruktur:
+ * Memastikan hanya user dengan role 'instruktur' yang bisa akses.
+ */
 const InstructorRoute = ({ children }) => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   return user.role === 'instruktur' ? children : <Navigate to="/dashboard" />;
+};
+
+/**
+ * Proteksi Rute Admin:
+ * Memastikan hanya user dengan role 'admin' yang bisa akses.
+ */
+const AdminRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" />;
+  return user.role === 'admin' ? children : <Navigate to="/dashboard" />;
 };
 
 function App() {
@@ -40,12 +65,20 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* --- PUBLIC ROUTES --- */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* SISWA */}
-          <Route path="/dashboard" element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
+          {/* --- SISWA ROUTES (Dashboard Utama) --- */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <PrivateRoute>
+                <DashboardLayout />
+              </PrivateRoute>
+            }
+          >
             <Route index element={<StudentDashboard />} />
             <Route path="profile" element={<StudentProfile />} />
             <Route path="certificates" element={<CertificatePage />} />
@@ -53,17 +86,34 @@ function App() {
             <Route path="course/:courseId/quiz" element={<QuizPage />} />
           </Route>
 
-          {/* INSTRUKTUR */}
-          <Route path="/instructor" element={<InstructorRoute><DashboardLayout /></InstructorRoute>}>
+          {/* --- INSTRUCTOR ROUTES --- */}
+          <Route 
+            path="/instructor" 
+            element={
+              <InstructorRoute>
+                <DashboardLayout />
+              </InstructorRoute>
+            }
+          >
             <Route index element={<InstructorDashboard />} />
-            {/* Tambah rute instruktur lain di sini */}
+            {/* Contoh rute tambahan instruktur */}
+            {/* <Route path="my-courses" element={<InstructorCourses />} /> */}
+            {/* <Route path="students" element={<StudentMonitoring />} /> */}
           </Route>
 
-          {/* ADMIN */}
-          <Route path="/admin" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
+          {/* --- ADMIN ROUTES --- */}
+          <Route 
+            path="/admin" 
+            element={
+              <AdminRoute>
+                <DashboardLayout />
+              </AdminRoute>
+            }
+          >
             <Route index element={<AdminDashboard />} />
           </Route>
 
+          {/* --- 404 NOT FOUND --- */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
@@ -71,12 +121,18 @@ function App() {
   );
 }
 
-// Komponen 404 agar rapi
+// Komponen tampilan jika halaman tidak ditemukan
 const NotFound = () => (
-  <div className="flex h-screen flex-col items-center justify-center bg-slate-50">
+  <div className="flex h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center">
     <h1 className="text-9xl font-black text-slate-200">404</h1>
-    <p className="text-xl font-bold text-slate-500 -mt-8">Halaman Tidak Ditemukan</p>
-    <Link to="/" className="mt-6 bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold">Kembali ke Beranda</Link>
+    <p className="text-2xl font-bold text-slate-800 -mt-6">Halaman Tidak Ditemukan</p>
+    <p className="text-slate-500 mt-2">Maaf, halaman yang Anda cari tidak tersedia atau telah dipindahkan.</p>
+    <Link 
+      to="/" 
+      className="mt-8 bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all"
+    >
+      Kembali ke Beranda
+    </Link>
   </div>
 );
 

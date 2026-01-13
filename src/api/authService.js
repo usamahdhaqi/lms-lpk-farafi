@@ -1,7 +1,7 @@
-import api from './api';
-
 export const authService = {
-  register: (data) => api.post('/api/register', data), // Nama, Email, WA
-  login: (credentials) => api.post('api/login', credentials),
-  getProfile: () => api.get('/api/profile'),
+  login: async (credentials) => {
+    // Pastikan URL-nya benar (pakai /api/login)
+    const response = await api.post('/api/login', credentials);
+    return response.data; // Ini harus berisi { user, token }
+  }
 };
