@@ -1,44 +1,38 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
-// Import Layouts
+import { AuthProvider, useAuth } from './context/AuthContext';
 import DashboardLayout from './layouts/DashboardLayout';
 
-// Import Pages (Fase 1)
+// Pages
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
-
-// Import Pages (Fase 2 & 3)
 import StudentDashboard from './pages/dashboard/StudentDashboard';
 import CourseContent from './pages/learning/CourseContent';
 import QuizPage from './pages/learning/QuizPage';
 import StudentProfile from './pages/dashboard/StudentProfile';
-
-// Import Pages (Fase 4)
 import CertificatePage from './pages/dashboard/CertificatePage';
-
-// Import Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 
-// Import Provider & Context
-import { AuthProvider, useAuth } from './context/AuthContext';
+// --- NEW INSTRUCTOR PAGES ---
+import InstructorDashboard from './pages/instructor/InstructorDashboard';
 
-/**
- * Proteksi Rute Siswa: Jika belum login, dilempar ke /login
- */
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
 };
 
-/**
- * Proteksi Rute Admin: Memastikan hanya admin yang bisa akses
- */
 const AdminRoute = ({ children }) => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   return user.role === 'admin' ? children : <Navigate to="/dashboard" />;
+};
+
+// --- NEW INSTRUCTOR ROUTE PROTECTION ---
+const InstructorRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" />;
+  return user.role === 'instruktur' ? children : <Navigate to="/dashboard" />;
 };
 
 function App() {
@@ -46,65 +40,44 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* --- PUBLIC ROUTES --- */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* --- STUDENT ROUTES (Menggunakan DashboardLayout agar Sidebar muncul) --- */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <PrivateRoute>
-                <DashboardLayout />
-              </PrivateRoute>
-            }
-          >
-            {/* path: /dashboard */}
+          {/* SISWA */}
+          <Route path="/dashboard" element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
             <Route index element={<StudentDashboard />} />
-            
-            {/* path: /dashboard/profile */}
             <Route path="profile" element={<StudentProfile />} />
-            
-            {/* path: /dashboard/certificates */}
             <Route path="certificates" element={<CertificatePage />} />
-            
-            {/* path: /dashboard/course/:id */}
             <Route path="course/:courseId" element={<CourseContent />} />
             <Route path="course/:courseId/quiz" element={<QuizPage />} />
           </Route>
 
-          {/* --- ADMIN ROUTES (Juga menggunakan DashboardLayout agar UI konsisten) --- */}
-          <Route 
-            path="/admin" 
-            element={
-              <AdminRoute>
-                <DashboardLayout />
-              </AdminRoute>
-            }
-          >
-            {/* path: /admin */}
-            <Route index element={<AdminDashboard />} />
-            {/* Anda bisa tambah rute admin lain di sini seperti 'users' atau 'reports' */}
+          {/* INSTRUKTUR */}
+          <Route path="/instructor" element={<InstructorRoute><DashboardLayout /></InstructorRoute>}>
+            <Route index element={<InstructorDashboard />} />
+            {/* Tambah rute instruktur lain di sini */}
           </Route>
 
-          {/* --- 404 NOT FOUND --- */}
-          <Route path="*" element={
-            <div className="flex h-screen flex-col items-center justify-center bg-slate-50">
-              <h1 className="text-9xl font-black text-slate-200">404</h1>
-              <p className="text-xl font-bold text-slate-500 -mt-8">Halaman Tidak Ditemukan</p>
-              <button 
-                onClick={() => window.location.href = '/'}
-                className="mt-6 bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-blue-100"
-              >
-                Kembali ke Beranda
-              </button>
-            </div>
-          } />
+          {/* ADMIN */}
+          <Route path="/admin" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
+            <Route index element={<AdminDashboard />} />
+          </Route>
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </AuthProvider>
   );
 }
+
+// Komponen 404 agar rapi
+const NotFound = () => (
+  <div className="flex h-screen flex-col items-center justify-center bg-slate-50">
+    <h1 className="text-9xl font-black text-slate-200">404</h1>
+    <p className="text-xl font-bold text-slate-500 -mt-8">Halaman Tidak Ditemukan</p>
+    <Link to="/" className="mt-6 bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold">Kembali ke Beranda</Link>
+  </div>
+);
 
 export default App;
