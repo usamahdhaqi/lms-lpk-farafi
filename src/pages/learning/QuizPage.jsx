@@ -61,21 +61,22 @@ export default function QuizPage() {
     });
     
     const finalScore = Math.round((correctCount / questions.length) * 100);
-    const isPassed = finalScore >= 75; // Minimal Kelulusan
-    
-    setScore(finalScore);
-    setCurrentStep('result');
+    const isPassed = finalScore >= 75;
 
     try {
-      // Simpan hasil ke database secara permanen
+      // Pastikan menggunakan 'course_id' bukan 'courseId' agar sinkron dengan index.js
       await api.post('/api/quiz/submit', {
         userId: user.id,
-        courseId: courseId,
+        course_id: courseId, 
         score: finalScore,
         isPassed: isPassed
       });
+
+      setScore(finalScore);
+      setCurrentStep('result');
     } catch (error) {
-      console.error("Gagal menyimpan hasil kuis:", error);
+      console.error("Gagal menyimpan hasil kuis ke database:", error);
+      alert("Terjadi kesalahan saat menyimpan nilai. Silakan coba lagi.");
     }
   };
 

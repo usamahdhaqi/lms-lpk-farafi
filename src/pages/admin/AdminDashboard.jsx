@@ -1,182 +1,208 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  CheckCircle, 
-  Users, 
-  CreditCard, 
-  Search, 
-  Loader2, 
-  AlertCircle,
-  Mail,
-  BookOpen,
-  RefreshCw
+  CheckCircle, Users, CreditCard, Search, Loader2, 
+  AlertCircle, Mail, BookOpen, RefreshCw, BarChart3, 
+  GraduationCap, Award, TrendingUp 
 } from 'lucide-react';
 import api from '../../api/api';
 
 export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('payments'); // 'payments' atau 'monitoring'
   const [pendingPayments, setPendingPayments] = useState([]);
+  const [studentProgress, setStudentProgress] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [stats, setStats] = useState({ totalPending: 0, totalRevenue: 0 });
+  const [stats, setStats] = useState({ totalPending: 0, totalRevenue: 0, avgProgress: 0 });
 
-  const fetchPayments = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/admin/pending-payments');
-      setPendingPayments(response.data);
+      // Ambil data pembayaran dan progres secara paralel
+      const [payRes, progRes] = await Promise.all([
+        api.get('/api/admin/pending-payments'),
+        api.get('/api/admin/student-progress')
+      ]);
+
+      setPendingPayments(payRes.data);
+      setStudentProgress(progRes.data);
       
-      // Hitung statistik sederhana dari data yang diterima
-      const revenue = response.data.reduce((acc, curr) => acc + Number(curr.price || 0), 0);
+      const revenue = payRes.data.reduce((acc, curr) => acc + Number(curr.price || 0), 0);
+      const avgProg = progRes.data.length > 0 
+        ? progRes.data.reduce((acc, curr) => acc + curr.progress_percentage, 0) / progRes.data.length 
+        : 0;
+
       setStats({
-        totalPending: response.data.length,
-        totalRevenue: revenue
+        totalPending: payRes.data.length,
+        totalRevenue: revenue,
+        avgProgress: Math.round(avgProg)
       });
     } catch (error) {
-      console.error("Gagal memuat pembayaran:", error);
+      console.error("Gagal memuat data admin:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPayments();
+    fetchData();
   }, []);
 
   const handleVerify = async (enrollmentId, studentName) => {
     if (!window.confirm(`Setujui akses kursus untuk ${studentName}?`)) return;
-
     try {
       await api.post(`/api/payments/verify/${enrollmentId}`);
-      alert("✅ Verifikasi berhasil! Akses kursus telah dibuka.");
-      fetchPayments(); // Refresh data otomatis
+      alert("✅ Verifikasi berhasil!");
+      fetchData();
     } catch (error) {
-      alert("❌ Gagal memverifikasi pembayaran.");
+      alert("❌ Gagal memverifikasi.");
     }
   };
 
-  // Filter pencarian
   const filteredPayments = pendingPayments.filter(p => 
-    p.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.student_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredProgress = studentProgress.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.course_title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      {/* Header & Statistik Ringkas */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Admin Dashboard</h1>
-          <p className="text-slate-500 mt-1">Verifikasi pembayaran manual dan kelola pendaftaran siswa.</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Admin Control Center</h1>
+          <p className="text-slate-500 mt-2 font-medium">Manajemen pembayaran dan pemantauan akademik LPK FARAFI.</p>
         </div>
+        <div className="flex flex-wrap gap-4">
+          <div className="bg-blue-600 text-white p-4 rounded-3xl shadow-xl shadow-blue-200 flex items-center gap-4">
+             <TrendingUp size={24} />
+             <div>
+                <p className="text-[10px] font-bold uppercase opacity-80">Rata-rata Progres</p>
+                <p className="text-xl font-black">{stats.avgProgress}%</p>
+             </div>
+          </div>
+          <button onClick={fetchData} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm hover:bg-slate-50 transition">
+            <RefreshCw size={24} className={loading ? "animate-spin" : ""} />
+          </button>
+        </div>
+      </div>
+
+      {/* Navigasi Tab */}
+      <div className="flex gap-2 bg-slate-100 p-1.5 rounded-[2rem] w-fit">
         <button 
-          onClick={fetchPayments}
-          className="flex items-center gap-2 text-blue-600 font-bold bg-blue-50 px-4 py-2 rounded-xl hover:bg-blue-100 transition"
+          onClick={() => setActiveTab('payments')}
+          className={`px-8 py-3 rounded-full font-bold text-sm transition-all ${activeTab === 'payments' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
-          <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> Segarkan Data
+          Verifikasi Pembayaran ({stats.totalPending})
+        </button>
+        <button 
+          onClick={() => setActiveTab('monitoring')}
+          className={`px-8 py-3 rounded-full font-bold text-sm transition-all ${activeTab === 'monitoring' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          Monitoring Siswa
         </button>
       </div>
 
-      {/* Kartu Statistik */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 flex items-center gap-6">
-          <div className="p-4 bg-amber-100 text-amber-600 rounded-2xl">
-            <CreditCard size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Menunggu Verifikasi</p>
-            <h3 className="text-3xl font-black text-slate-800">{stats.totalPending} Pesanan</h3>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 flex items-center gap-6">
-          <div className="p-4 bg-blue-100 text-blue-600 rounded-2xl">
-            <Users size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Potensi Pendapatan</p>
-            <h3 className="text-3xl font-black text-slate-800">Rp {stats.totalRevenue.toLocaleString('id-ID')}</h3>
-          </div>
-        </div>
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+        <input 
+          type="text" 
+          placeholder="Cari nama siswa atau pelatihan..." 
+          className="w-full pl-12 pr-6 py-4 bg-white border border-slate-100 rounded-[1.5rem] shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
-      {/* Tabel Utama */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden">
-        <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/30">
-          <h2 className="font-black text-xl text-slate-800 flex items-center gap-2">
-            <AlertCircle className="text-amber-500" size={24} /> Antrian Pembayaran
-          </h2>
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-4 top-3.5 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Cari nama siswa atau kursus..."
-              className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition shadow-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="p-20 text-center">
-              <Loader2 className="animate-spin text-blue-600 mx-auto" size={40} />
-              <p className="mt-4 font-bold text-slate-400">Menghubungkan ke database...</p>
-            </div>
-          ) : filteredPayments.length > 0 ? (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 text-slate-400 text-[11px] uppercase tracking-[0.2em] font-black">
-                  <th className="p-6">Data Siswa</th>
-                  <th className="p-6">Kursus & Metode</th>
-                  <th className="p-6">Nominal</th>
-                  <th className="p-6 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredPayments.map((p) => (
-                  <tr key={p.id} className="hover:bg-blue-50/30 transition-colors group">
-                    <td className="p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-black">
-                          {p.student_name?.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-800">{p.student_name}</p>
-                          <p className="text-xs text-slate-400 flex items-center gap-1"><Mail size={12}/> {p.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-6">
-                      <p className="text-sm font-bold text-slate-700">{p.course_title}</p>
-                      <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold uppercase mt-1 inline-block border border-slate-200">
-                        {p.payment_method}
-                      </span>
-                    </td>
-                    <td className="p-6 font-black text-blue-600">
-                      Rp {Number(p.price || 0).toLocaleString('id-ID')}
-                    </td>
-                    <td className="p-6">
-                      <div className="flex justify-center">
-                        <button 
-                          onClick={() => handleVerify(p.id, p.student_name)}
-                          className="flex items-center gap-2 bg-green-500 text-white px-5 py-2.5 rounded-xl font-black text-xs hover:bg-green-600 hover:scale-105 transition-all shadow-lg shadow-green-100"
-                        >
-                          <CheckCircle size={16} /> VERIFIKASI
-                        </button>
-                      </div>
-                    </td>
+      {/* Konten Utama Berdasarkan Tab */}
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl overflow-hidden">
+        {loading ? (
+          <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto text-blue-600" size={40} /></div>
+        ) : (
+          <div className="overflow-x-auto">
+            {activeTab === 'payments' ? (
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50 text-slate-400 text-[11px] uppercase tracking-widest font-black">
+                  <tr>
+                    <th className="p-8">Siswa</th>
+                    <th className="p-8">Pelatihan</th>
+                    <th className="p-8">Metode & Harga</th>
+                    <th className="p-8 text-center">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="p-20 text-center">
-              <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle size={32} className="text-slate-300" />
-              </div>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Semua Beres</p>
-              <p className="text-slate-500 text-sm mt-1">Tidak ada pembayaran yang perlu diverifikasi.</p>
-            </div>
-          )}
-        </div>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {filteredPayments.map(p => (
+                    <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-8">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-bold">{p.student_name[0]}</div>
+                          <div>
+                            <p className="font-bold text-slate-800">{p.student_name}</p>
+                            <p className="text-xs text-slate-400">{p.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-8 font-medium">{p.course_title}</td>
+                      <td className="p-8">
+                        <p className="text-sm font-bold text-blue-600">Rp {Number(p.price).toLocaleString('id-ID')}</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">{p.payment_method}</p>
+                      </td>
+                      <td className="p-8 flex justify-center">
+                        <button onClick={() => handleVerify(p.id, p.student_name)} className="bg-green-500 text-white px-6 py-2 rounded-xl font-bold text-xs hover:bg-green-600 transition shadow-lg shadow-green-100">SETUJUI</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50 text-slate-400 text-[11px] uppercase tracking-widest font-black">
+                  <tr>
+                    <th className="p-8">Siswa & Kursus</th>
+                    <th className="p-8">Progres Belajar</th>
+                    <th className="p-8">Nilai Kuis</th>
+                    <th className="p-8">Status Akhir</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {filteredProgress.map(p => (
+                    <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-8">
+                        <p className="font-bold text-slate-800">{p.name}</p>
+                        <p className="text-xs text-blue-500 font-medium">{p.course_title}</p>
+                      </td>
+                      <td className="p-8">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 transition-all" style={{ width: `${p.progress_percentage}%` }}></div>
+                          </div>
+                          <span className="text-xs font-black text-slate-700">{p.progress_percentage}%</span>
+                        </div>
+                      </td>
+                      <td className="p-8">
+                        <p className={`text-sm font-black ${p.quiz_score >= 75 ? 'text-green-600' : 'text-slate-400'}`}>
+                          {p.quiz_score || 0} / 100
+                        </p>
+                      </td>
+                      <td className="p-8">
+                        {p.is_passed ? (
+                          <span className="flex items-center gap-1.5 text-green-600 text-[10px] font-black uppercase">
+                            <Award size={14} /> Lulus & Bersertifikat
+                          </span>
+                        ) : (
+                          <span className="text-slate-300 text-[10px] font-black uppercase">Dalam Proses</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
