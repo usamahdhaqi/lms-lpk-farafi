@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Users, Search, Loader2, GraduationCap, CheckCircle, Clock } from 'lucide-react';
 import api from '../../api/api';
+import { useLocation } from 'react-router-dom';
 
 export default function StudentMonitoring() {
   const { user } = useAuth();
+  const location = useLocation();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(location.state?.filterCourse || "");
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -25,10 +27,15 @@ export default function StudentMonitoring() {
     if (user) fetchStudentData();
   }, [user]);
 
-  const filteredStudents = students.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.course_title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStudents = students.filter(s => {
+    const search = searchTerm.toLowerCase();
+    
+    // Pastikan properti nama kursus sesuai dengan data dari API (course_title)
+    const matchName = s.name.toLowerCase().includes(search);
+    const matchCourse = s.course_title?.toLowerCase().includes(search); 
+    
+    return matchName || matchCourse;
+  });
 
   if (loading) return (
     <div className="flex h-96 flex-col items-center justify-center gap-4">

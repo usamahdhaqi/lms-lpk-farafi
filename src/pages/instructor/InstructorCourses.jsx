@@ -15,7 +15,8 @@ import {
   Trash2,
   ExternalLink,
   Settings2,
-  Award
+  Award,
+  Users
 } from 'lucide-react';
 import api from '../../api/api';
 
@@ -178,8 +179,11 @@ export default function InstructorCourses() {
               >
                 <LayoutGrid size={20} /> KELOLA KURIKULUM
               </button>
-              <button className="w-full bg-white border-2 border-slate-100 text-slate-500 py-5 rounded-[1.8rem] font-black flex items-center justify-center gap-3 hover:bg-slate-50 transition-all">
-                <ExternalLink size={20} /> PREVIEW SISWA
+              <button 
+                onClick={() => navigate('/instructor/students', { state: { filterCourse: course.title } })}
+                className="w-full bg-white border-2 border-slate-100 text-slate-500 py-5 rounded-[1.8rem] font-black flex items-center justify-center gap-3 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm"
+                >
+                <Users size={20} /> MONITORING SISWA
               </button>
             </div>
           </div>
