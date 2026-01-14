@@ -19,8 +19,9 @@ import CertificatePage from './pages/dashboard/CertificatePage';
 
 // Import Pages (Instruktur)
 import InstructorDashboard from './pages/instructor/InstructorDashboard';
-// import InstructorCourses from './pages/instructor/InstructorCourses'; // Opsional jika sudah ada
-// import StudentMonitoring from './pages/instructor/StudentMonitoring'; // Opsional jika sudah ada
+import InstructorCourses from './pages/instructor/InstructorCourses';
+import StudentMonitoring from './pages/instructor/StudentMonitoring';
+import QuizBank from './pages/instructor/QuizBank';
 
 // Import Pages (Admin)
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -96,9 +97,9 @@ function App() {
             }
           >
             <Route index element={<InstructorDashboard />} />
-            {/* Contoh rute tambahan instruktur */}
-            {/* <Route path="my-courses" element={<InstructorCourses />} /> */}
-            {/* <Route path="students" element={<StudentMonitoring />} /> */}
+              <Route path="my-courses" element={<InstructorCourses />} />
+              <Route path="students" element={<StudentMonitoring />} />
+              <Route path="quiz-bank/:courseId" element={<QuizBank />} />
           </Route>
 
           {/* --- ADMIN ROUTES --- */}

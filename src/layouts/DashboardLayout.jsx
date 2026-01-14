@@ -38,6 +38,7 @@ export default function DashboardLayout() {
     if (role === 'instruktur') {
       return [
         { path: '/instructor', label: 'Panel Instruktur', icon: <Presentation size={20} /> },
+        { path: '/instructor/my-courses', label: 'Kursus Saya', icon: <BookOpen size={20} /> },
         { path: '/instructor/students', label: 'Monitoring Siswa', icon: <Users size={20} /> },
       ];
     }
