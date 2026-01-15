@@ -63,9 +63,6 @@ export default function InstructorDashboard() {
 
         setRecentCourses(myCourses.slice(0, 3));
 
-        console.log("Daftar ID Kursus Saya:", myCourseIds);
-        console.log("Semua Data Progres:", allStudentProgress);
-        console.log("Siswa yang Cocok:", myStudents);
         } catch (error) {
             console.error("Gagal memuat data dashboard:", error);
         } finally {
@@ -150,10 +147,15 @@ export default function InstructorDashboard() {
                     <Users size={18} />
                   </button>
                   <button 
-                    onClick={() => navigate(`/instructor/quiz-bank/${course.id}`)}
+                    onClick={() => navigate('/instructor/my-courses', { 
+                        state: { 
+                        openModal: true, 
+                        targetCourseId: course.id 
+                        } 
+                    })}
                     className="p-3 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-600 hover:text-white transition-all shadow-sm"
-                    title="Kelola Bank Soal"
-                  >
+                    title="Kelola Kurikulum"
+                    >
                     <ArrowRight size={18} />
                   </button>
                 </div>

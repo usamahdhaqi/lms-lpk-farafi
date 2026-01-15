@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Plus, 
@@ -23,6 +23,7 @@ import api from '../../api/api';
 export default function InstructorCourses() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [myCourses, setMyCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -77,18 +78,35 @@ export default function InstructorCourses() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      try {
-        // Mengambil kursus berdasarkan instructor_id yang login
+        try {
+        // 1. Mengambil kursus berdasarkan instructor_id yang login
         const response = await api.get(`/api/instructor/courses/${user.id}`);
-        setMyCourses(response.data);
-      } catch (error) {
+        const dataCourses = response.data;
+        setMyCourses(dataCourses);
+
+        // 2. LOGIKA TAMBAHAN: Cek apakah ada instruksi buka modal dari Dashboard
+        if (location.state?.openModal && location.state?.targetCourseId && dataCourses.length > 0) {
+            // Cari kursus yang ID-nya sesuai dengan kiriman dari dashboard
+            const target = dataCourses.find(c => String(c.id) === String(location.state.targetCourseId));
+            
+            if (target) {
+            setSelectedCourse(target);
+            setShowManageModal(true);
+            fetchLessons(target.id); // Pastikan fungsi fetchLessons sudah ada di komponen Anda
+
+            // 3. Bersihkan state navigasi agar modal tidak muncul terus saat refresh
+            window.history.replaceState({}, document.title);
+            }
+        }
+        } catch (error) {
         console.error("Gagal memuat kursus:", error);
-      } finally {
+        } finally {
         setLoading(false);
-      }
+        }
     };
-    if (user) fetchCourses();
-  }, [user]);
+
+    if (user?.id) fetchCourses();
+  }, [user, location.state]); // Tambahkan location.state sebagai dependency
 
   const handleAddLesson = async (e) => {
     e.preventDefault();
