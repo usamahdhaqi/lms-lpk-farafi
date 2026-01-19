@@ -26,6 +26,7 @@ import QuizBank from './pages/instructor/QuizBank';
 // Import Pages (Admin)
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
+import PaymentVerification from './pages/admin/PaymentVerification';
 
 /**
  * Proteksi Rute Siswa: 
@@ -115,6 +116,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
               <Route path="admin" element={<AdminDashboard />} />
               <Route path="users" element={<UserManagement />} />
+              <Route path="payments" element={<PaymentVerification />} />
           </Route>
 
           {/* --- 404 NOT FOUND --- */}

@@ -114,7 +114,7 @@ export default function StudentDashboard() {
                 {item.title}
               </h3>
               <p className="text-sm text-slate-400 mb-8 font-medium italic">
-                Instruktur: <span className="text-slate-600">{item.instructor || 'Tim LPK Farafi'}</span>
+                Instruktur: <span className="text-slate-600">{item.instructor_name || 'Tim LPK Farafi'}</span>
               </p>
               
               {item.payment_status === 'paid' ? (
