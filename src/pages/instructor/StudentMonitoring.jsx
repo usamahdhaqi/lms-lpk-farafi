@@ -14,26 +14,33 @@ export default function StudentMonitoring() {
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
-        // Mengambil data progres siswa dari endpoint instruktur
-        const response = await api.get(`/api/admin/student-progress`); 
-        // Filter agar instruktur hanya melihat progres kursus yang mereka ajar
-        setStudents(response.data);
+        // 1. Ambil data kursus yang diajar oleh instruktur ini
+        const courseRes = await api.get(`/api/instructor/courses/${user.id}`);
+        const myCourseIds = courseRes.data.map(c => String(c.id).toLowerCase());
+
+        // 2. Ambil semua data progres siswa dari endpoint admin
+        const progressRes = await api.get(`/api/admin/student-progress`); 
+        
+        // 3. Filter: Hanya tampilkan siswa yang course_id nya ada dalam daftar kursus instruktur
+        const filteredByInstructor = progressRes.data.filter(s => 
+          s.course_id && myCourseIds.includes(String(s.course_id).toLowerCase())
+        );
+
+        setStudents(filteredByInstructor);
       } catch (error) {
         console.error("Gagal memuat data monitoring:", error);
       } finally {
         setLoading(false);
       }
     };
-    if (user) fetchStudentData();
+
+    if (user?.id) fetchStudentData();
   }, [user]);
 
   const filteredStudents = students.filter(s => {
     const search = searchTerm.toLowerCase();
-    
-    // Pastikan properti nama kursus sesuai dengan data dari API (course_title)
-    const matchName = s.name.toLowerCase().includes(search);
+    const matchName = s.name?.toLowerCase().includes(search);
     const matchCourse = s.course_title?.toLowerCase().includes(search); 
-    
     return matchName || matchCourse;
   });
 

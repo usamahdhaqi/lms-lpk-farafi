@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle, Users, CreditCard, Search, Loader2, 
-  AlertCircle, Mail, BookOpen, RefreshCw, BarChart3, 
+  AlertCircle, Mail, BookOpen, RefreshCw, BarChart3, ArrowRight,
   GraduationCap, Award, TrendingUp, PlusCircle, Trash2, Edit3
 } from 'lucide-react';
 import api from '../../api/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState('payments');
   const [pendingPayments, setPendingPayments] = useState([]);
   const [studentProgress, setStudentProgress] = useState([]);
@@ -175,40 +178,46 @@ export default function AdminDashboard() {
         ) : (
           <div>
             {activeTab === 'payments' && (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-slate-50 text-slate-400 text-[11px] uppercase tracking-widest font-black">
-                    <tr>
-                      <th className="p-8">Siswa</th>
-                      <th className="p-8">Pelatihan</th>
-                      <th className="p-8">Metode & Harga</th>
-                      <th className="p-8 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {filteredPayments.map(p => (
-                      <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="p-8">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-bold">{p.student_name[0]}</div>
-                            <div>
-                              <p className="font-bold text-slate-800">{p.student_name}</p>
-                              <p className="text-xs text-slate-400">{p.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-8 font-medium">{p.course_title}</td>
-                        <td className="p-8">
-                          <p className="text-sm font-bold text-blue-600">Rp {Number(p.price).toLocaleString('id-ID')}</p>
-                          <p className="text-[10px] text-slate-400 uppercase font-bold">{p.payment_method}</p>
-                        </td>
-                        <td className="p-8 flex justify-center">
-                          <button onClick={() => handleVerify(p.id, p.student_name)} className="bg-green-500 text-white px-6 py-2 rounded-xl font-bold text-xs hover:bg-green-600 transition shadow-lg shadow-green-100">SETUJUI</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="p-12 text-center animate-in zoom-in duration-300">
+                <div className="max-w-md mx-auto space-y-6">
+                  <div className="relative inline-block">
+                    <div className="w-24 h-24 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner">
+                      <CreditCard size={40} />
+                    </div>
+                    {stats.totalPending > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-black w-8 h-8 rounded-full flex items-center justify-center border-4 border-white animate-bounce">
+                        {stats.totalPending}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-800">Verifikasi Pembayaran</h3>
+                    <p className="text-slate-500 mt-2 font-medium">
+                      {stats.totalPending > 0 
+                        ? `Terdapat ${stats.totalPending} transaksi baru yang menunggu validasi Anda.` 
+                        : "Belum ada transaksi baru yang perlu diverifikasi saat ini."}
+                    </p>
+                  </div>
+
+                  <button 
+                    onClick={() => navigate('/admin/payments')} // Arahkan ke halaman baru yang Anda buat
+                    className="w-full py-5 bg-blue-600 text-white rounded-[2rem] font-black shadow-xl shadow-blue-100 hover:bg-blue-700 transition active:scale-95 flex items-center justify-center gap-3"
+                  >
+                    BUKA HALAMAN VERIFIKASI <ArrowRight size={20} />
+                  </button>
+
+                  <div className="pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
+                    <div className="text-left p-4 bg-slate-50 rounded-2xl">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Revenue</p>
+                      <p className="text-lg font-black text-blue-600">Rp {stats.totalRevenue.toLocaleString('id-ID')}</p>
+                    </div>
+                    <div className="text-left p-4 bg-slate-50 rounded-2xl">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status Sistem</p>
+                      <p className="text-lg font-black text-green-600 uppercase">Aktif</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
