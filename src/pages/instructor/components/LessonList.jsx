@@ -1,8 +1,7 @@
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { GripVertical, Trash2, Award, MonitorPlay, FileStack, FileText } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, Award, Edit2, MonitorPlay, FileStack, FileText } from 'lucide-react';
 import api from '../../../api/api';
 
-export default function LessonList({ lessons, setLessons, fetchLessons, courseId }) {
+export default function LessonList({ lessons, setLessons, fetchLessons, courseId, onEdit }) {
   
   const getLessonIcon = (type, title) => {
     if (type === 'quiz' || title.toLowerCase().includes('ujian')) return <Award className="text-amber-500" />;
@@ -11,20 +10,28 @@ export default function LessonList({ lessons, setLessons, fetchLessons, courseId
     return <FileText className="text-purple-500" />;
   };
 
-  const onDragEnd = async (result) => {
-    if (!result.destination) return;
-    const items = Array.from(lessons);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+  const moveLesson = async (index, direction) => {
+    const newItems = [...lessons];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= newItems.length) return;
+
+    [newItems[index], newItems[targetIndex]] = [newItems[targetIndex], newItems[index]];
     
-    setLessons(items);
-    const sortedIds = items.map(item => Number(item.id));
+    // Update tampilan dulu agar user tidak merasa lag
+    setLessons(newItems);
 
     try {
-      await api.put('/api/instructor/lessons/reorder', { sortedIds });
+        const sortedIds = newItems.map(item => Number(item.id));
+        console.log("🚀 Mengirim ke server:", sortedIds);
+
+        const response = await api.put('/api/instructor/lessons/reorder', { sortedIds });
+        console.log("✅ Berhasil:", response.data.message);
     } catch (error) {
-      alert("Gagal menyimpan urutan");
-      fetchLessons(courseId);
+        console.error("❌ Detail Error API:", error.response?.data);
+        // Penting: Tarik ulang data asli jika gagal agar urutan di layar sinkron dengan DB
+        fetchLessons(courseId); 
+        alert("Gagal memperbarui urutan. Server merespon: " + (error.response?.data?.detail || "Error 500"));
     }
   };
 
@@ -39,42 +46,69 @@ export default function LessonList({ lessons, setLessons, fetchLessons, courseId
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex justify-between items-center px-2 mb-4">
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-center px-2 mb-6">
         <h3 className="font-black text-slate-400 uppercase text-xs tracking-widest">Alur Pembelajaran</h3>
-        <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-1 rounded font-black uppercase">Drag untuk Urutkan</span>
+        <span className="text-[10px] bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-black uppercase">
+          Gunakan panah untuk urutan
+        </span>
       </div>
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="lessons-list">
-          {(provided) => (
-            <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3 pr-2 custom-scrollbar">
-              {lessons.map((lesson, index) => (
-                <Draggable key={String(lesson.id)} draggableId={String(lesson.id)} index={index}>
-                  {(provided, snapshot) => (
-                    <div ref={provided.innerRef} {...provided.draggableProps} className={`p-6 bg-white border rounded-[2rem] flex items-center justify-between group transition-all ${snapshot.isDragging ? 'border-blue-500 shadow-2xl z-[9999]' : 'border-slate-100'}`}>
-                      <div className="flex items-center gap-5">
-                        <div {...provided.dragHandleProps} className="text-slate-300 hover:text-blue-500 p-2 cursor-grab">
-                          <GripVertical size={20} />
-                        </div>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50">
-                          {getLessonIcon(lesson.type, lesson.title)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-800 text-base line-clamp-1">{lesson.title}</p>
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md border text-slate-400">{lesson.type}</span>
-                        </div>
-                      </div>
-                      <button onClick={() => handleDelete(lesson.id)} className="p-3 text-red-600 bg-red-50 rounded-xl hover:bg-red-600 hover:text-white transition-all"><Trash2 size={16} /></button>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
+      <div className="space-y-4">
+        {lessons.map((lesson, index) => (
+          <div 
+            key={lesson.id} 
+            className="p-5 bg-white border border-slate-100 rounded-[2rem] flex items-center justify-between group hover:border-blue-200 transition-all shadow-sm"
+          >
+            <div className="flex items-center gap-5">
+              {/* Tombol Navigasi Up/Down */}
+              <div className="flex flex-col gap-1">
+                <button 
+                  onClick={() => moveLesson(index, 'up')}
+                  disabled={index === 0}
+                  className={`p-1.5 rounded-lg transition-colors ${index === 0 ? 'text-slate-100' : 'text-slate-300 hover:bg-blue-50 hover:text-blue-600'}`}
+                >
+                  <ArrowUp size={18} />
+                </button>
+                <button 
+                  onClick={() => moveLesson(index, 'down')}
+                  disabled={index === lessons.length - 1}
+                  className={`p-1.5 rounded-lg transition-colors ${index === lessons.length - 1 ? 'text-slate-100' : 'text-slate-300 hover:bg-blue-50 hover:text-blue-600'}`}
+                >
+                  <ArrowDown size={18} />
+                </button>
+              </div>
+
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-50">
+                {getLessonIcon(lesson.type, lesson.title)}
+              </div>
+              
+              <div>
+                <p className="font-bold text-slate-800 text-base line-clamp-1">{lesson.title}</p>
+                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md border border-slate-100 text-slate-400 bg-slate-50/50">
+                  {lesson.type}
+                </span>
+              </div>
             </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+
+            <div className="flex gap-2">
+              {/* Tombol Edit Baru */}
+              <button 
+                onClick={() => onEdit(lesson)} 
+                className="p-4 text-blue-400 bg-white border border-slate-50 rounded-2xl hover:bg-blue-50 transition-all"
+              >
+                <Edit2 size={18} />
+              </button>
+              <button 
+                onClick={() => handleDelete(lesson.id)} 
+                className="p-4 text-red-400 bg-white border border-slate-50 rounded-2xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
