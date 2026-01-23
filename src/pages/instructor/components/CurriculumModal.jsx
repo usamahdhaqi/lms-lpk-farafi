@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Loader2 } from 'lucide-react';
+import { X, Plus, Loader2, HelpCircle, ChevronRight, Award, Edit2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../../api/api';
 import LessonForm from './LessonForm';
 import LessonList from './LessonList';
+import QuizModal from './QuizModal';
 
 export default function CurriculumModal({ course, onClose }) {
-  // State untuk menyimpan data materi
+  const navigate = useNavigate();
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingLesson, setEditingLesson] = useState(null);
+  const [showQuizModal, setShowQuizModal] = useState(false);
 
   // Fungsi untuk mengambil data materi dari server
   const fetchLessons = async () => {
@@ -41,10 +44,14 @@ export default function CurriculumModal({ course, onClose }) {
       <div className="relative bg-white w-full max-w-5xl rounded-[3.5rem] shadow-2xl overflow-hidden h-[90vh] flex flex-col animate-in zoom-in duration-300">
         
         <div className="p-8 border-b border-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50/50 gap-4">
-          <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Manajemen Kurikulum</h2>
-            <p className="text-blue-600 text-xs font-bold uppercase tracking-wider">{course?.title}</p>
+          <div className="flex items-center gap-4">
+
+            <div>
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-none">Manajemen Kurikulum</h2>
+              <p className="text-blue-600 text-[10px] font-black uppercase tracking-wider mt-1">{course?.title}</p>
+            </div>
           </div>
+
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button 
               onClick={() => setShowAddModal(true)}
@@ -62,35 +69,43 @@ export default function CurriculumModal({ course, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 bg-white custom-scrollbar">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-64 gap-3">
-              <Loader2 className="animate-spin text-blue-600" size={40} />
-              <p className="font-bold text-slate-400 uppercase text-xs tracking-widest">Memuat Materi...</p>
-            </div>
-          ) : lessons.length > 0 ? (
-            <div className="max-w-4xl mx-auto">
-              <LessonList 
-                lessons={lessons} 
-                setLessons={setLessons} 
-                fetchLessons={fetchLessons} 
-                courseId={course.id} 
-                onEdit={(lesson) => {
-                  setEditingLesson(lesson);
-                  setShowAddModal(true);
-                }}
-              />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed border-slate-100 rounded-[3rem]">
-              <p className="text-slate-400 font-bold">Belum ada materi dalam kursus ini.</p>
+          <div className="max-w-4xl mx-auto space-y-4">
+            
+            {/* Daftar Materi Dinamis dari Database */}
+            <LessonList 
+              lessons={lessons} 
+              setLessons={setLessons} 
+              fetchLessons={fetchLessons} 
+              courseId={course.id} 
+              onEdit={(lesson) => {
+                setEditingLesson(lesson);
+                setShowAddModal(true);
+              }}
+            />
+
+            {/* ITEM OTOMATIS: UJIAN AKHIR */}
+            <div className="p-6 bg-amber-50 border border-amber-200 rounded-[2.5rem] flex items-center justify-between group shadow-sm mt-8">
+              <div className="flex items-center gap-5">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-amber-500 text-white shadow-lg shadow-amber-200">
+                  <Award size={24} />
+                </div>
+                <div>
+                  <p className="font-black text-slate-800 text-lg uppercase tracking-tight">Ujian Akhir Sertifikasi</p>
+                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md border border-amber-200 text-amber-600 bg-white">
+                    Sistem Otomatis
+                  </span>
+                </div>
+              </div>
+
+              {/* Tombol Edit ini akan membuka Bank Soal */}
               <button 
-                onClick={() => setShowAddModal(true)}
-                className="mt-4 text-blue-600 font-black text-sm uppercase hover:underline"
+                onClick={() => setShowQuizModal(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-white text-amber-600 border border-amber-200 rounded-2xl font-black text-xs hover:bg-amber-500 hover:text-white transition-all shadow-sm"
               >
-                Mulai buat materi pertama
+                <Edit2 size={16} /> KELOLA SOAL KUIS
               </button>
             </div>
-          )}
+          </div>
         </div>
 
         <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -98,6 +113,14 @@ export default function CurriculumModal({ course, onClose }) {
           <span>Instruktur: {course?.instructor_name || 'Anda'}</span>
         </div>
       </div>
+
+      {/* Render QuizModal jika aktif */}
+      {showQuizModal && (
+        <QuizModal 
+          course={course} 
+          onClose={() => setShowQuizModal(false)} 
+        />
+      )}
 
       {showAddModal && (
         <LessonForm 

@@ -39,29 +39,28 @@ export default function CourseContent() {
 
   const handleComplete = async (lessonId) => {
     try {
-      // 1. Kirim data ke backend untuk update database
+      // Mengirim data ke API yang nantinya akan masuk ke tabel student_progress
       await api.post('/api/progress/complete', { 
         userId: user.id, 
         lessonId, 
         courseId 
       });
       
-      // 2. Update status materi secara lokal
+      // Update status materi secara lokal menggunakan angka 1 (sesuai database)
       const updatedLessons = lessons.map((l) => {
-        if (l.id === lessonId) return { ...l, isCompleted: 1 };
+        if (l.id === lessonId) return { ...l, isCompleted: 1 }; //
         return l;
       });
       setLessons(updatedLessons);
 
-      // 3. Cari materi berikutnya untuk ditampilkan di modal
       const currentIndex = updatedLessons.findIndex(l => l.id === lessonId);
       const next = updatedLessons[currentIndex + 1];
       
       setNextLesson(next || null);
-      setShowModal(true); // Munculkan modal
+      setShowModal(true);
 
     } catch (err) {
-      alert("Gagal menyimpan progres.");
+      alert("Gagal menyimpan progres ke database.");
     }
   };
 
@@ -126,7 +125,7 @@ export default function CourseContent() {
           )}
         </div>
         
-        {/* Accordion Daftar Materi */}
+        {/* Accordion Daftar Materi dengan Logika Database */}
         <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl overflow-hidden">
             <button onClick={() => setShowCurriculum(!showCurriculum)} className="w-full p-8 flex items-center justify-between hover:bg-slate-50 transition">
                 <span className="font-black text-slate-800 uppercase tracking-tight">Daftar Materi Pelatihan</span>
@@ -135,11 +134,30 @@ export default function CourseContent() {
             {showCurriculum && (
                 <div className="p-8 pt-0 space-y-2 bg-slate-50/30">
                 {lessons.map((lesson, index) => {
-                    const isOpen = index === 0 || lessons[index - 1].isCompleted === 1;
+                    // Logika: Terbuka jika ini materi pertama ATAU materi sebelumnya is_completed = 1
+                    const isPreviousCompleted = index === 0 || lessons[index - 1].isCompleted === 1; //
+                    
                     return (
-                    <button key={lesson.id} disabled={!isOpen} onClick={() => setActiveLesson(lesson)} className={`w-full flex items-center justify-between p-4 rounded-2xl border ${activeLesson?.id === lesson.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-white border-slate-100'} ${!isOpen ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}>
-                        <span className="text-sm font-bold">{lesson.title}</span>
-                        {lesson.isCompleted ? <CheckCircle2 size={18} /> : isOpen ? <PlayCircle size={18} /> : <Lock size={18} />}
+                    <button 
+                        key={lesson.id} 
+                        disabled={!isPreviousCompleted} 
+                        onClick={() => setActiveLesson(lesson)} 
+                        className={`w-full flex items-center justify-between p-4 rounded-2xl border 
+                            ${activeLesson?.id === lesson.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-white border-slate-100'} 
+                            ${!isPreviousCompleted ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <span className="text-xs opacity-50 font-bold">{index + 1}.</span>
+                            <span className="text-sm font-bold">{lesson.title}</span>
+                        </div>
+                        {/* Cek status dari tabel student_progress */}
+                        {lesson.isCompleted === 1 ? (
+                            <CheckCircle2 size={18} className="text-green-400" />
+                        ) : isPreviousCompleted ? (
+                            <PlayCircle size={18} />
+                        ) : (
+                            <Lock size={18} />
+                        )}
                     </button>
                     );
                 })}

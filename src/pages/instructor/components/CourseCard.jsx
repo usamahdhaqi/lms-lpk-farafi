@@ -11,7 +11,6 @@ export default function CourseCard({ course, onManage }) {
           {course.id.substring(0, 2).toUpperCase()}
         </div>
         <div className="flex gap-2">
-          <button onClick={() => navigate(`/instructor/quiz-bank/${course.id}`)} className="p-4 bg-amber-50 text-amber-600 rounded-2xl hover:bg-amber-100 transition border border-amber-100"><HelpCircle size={22} /></button>
           <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 transition border border-slate-100"><Settings2 size={22} /></button>
         </div>
       </div>

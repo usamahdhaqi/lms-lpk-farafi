@@ -13,7 +13,6 @@ import Register from './pages/Register';
 // Import Pages (Siswa)
 import StudentDashboard from './pages/dashboard/StudentDashboard';
 import CourseContent from './pages/learning/CourseContent';
-import QuizPage from './pages/learning/QuizPage';
 import StudentProfile from './pages/dashboard/StudentProfile';
 import CertificatePage from './pages/dashboard/CertificatePage';
 
@@ -21,7 +20,6 @@ import CertificatePage from './pages/dashboard/CertificatePage';
 import InstructorDashboard from './pages/instructor/InstructorDashboard';
 import InstructorCourses from './pages/instructor/InstructorCourses';
 import StudentMonitoring from './pages/instructor/StudentMonitoring';
-import QuizBank from './pages/instructor/QuizBank';
 
 // Import Pages (Admin)
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -87,7 +85,6 @@ function App() {
             <Route path="profile" element={<StudentProfile />} />
             <Route path="certificates" element={<CertificatePage />} />
             <Route path="course/:courseId" element={<CourseContent />} />
-            <Route path="course/:courseId/quiz" element={<QuizPage />} />
           </Route>
 
           {/* --- INSTRUCTOR ROUTES --- */}
@@ -102,7 +99,6 @@ function App() {
             <Route index element={<InstructorDashboard />} />
               <Route path="my-courses" element={<InstructorCourses />} />
               <Route path="students" element={<StudentMonitoring />} />
-              <Route path="quiz-bank/:courseId" element={<QuizBank />} />
           </Route>
 
           {/* --- ADMIN ROUTES --- */}
