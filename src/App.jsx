@@ -15,6 +15,7 @@ import StudentDashboard from './pages/dashboard/StudentDashboard';
 import CourseContent from './pages/learning/CourseContent';
 import StudentProfile from './pages/dashboard/StudentProfile';
 import CertificatePage from './pages/dashboard/CertificatePage';
+import QuizPage from './pages/learning/QuizPage';
 
 // Import Pages (Instruktur)
 import InstructorDashboard from './pages/instructor/InstructorDashboard';
@@ -85,6 +86,7 @@ function App() {
             <Route path="profile" element={<StudentProfile />} />
             <Route path="certificates" element={<CertificatePage />} />
             <Route path="course/:courseId" element={<CourseContent />} />
+            <Route path="course/:courseId/quiz" element={<QuizPage />} />
           </Route>
 
           {/* --- INSTRUCTOR ROUTES --- */}

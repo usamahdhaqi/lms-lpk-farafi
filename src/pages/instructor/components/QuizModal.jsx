@@ -80,6 +80,25 @@ export default function QuizModal({ course, onClose }) {
     }
   };
 
+  const handleQuickUpdateCorrect = async (questionId, newCorrect) => {
+    try {
+      // Memanggil endpoint baru untuk update kunci
+      await api.put(`/api/instructor/questions/${questionId}/correct-option`, {
+        correct_option: newCorrect
+      });
+      
+      // Update state lokal supaya UI berubah tanpa refresh
+      setQuestions(questions.map(q => 
+        q.id === questionId ? { ...q, correct_option: newCorrect } : q
+      ));
+      
+      // Tampilkan notifikasi sukses yang sudah Anda buat
+      showNotification("Kunci jawaban diperbarui!"); 
+    } catch (err) {
+      showNotification("Gagal memperbarui kunci", "error");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop dengan Blur */}
@@ -202,7 +221,7 @@ export default function QuizModal({ course, onClose }) {
           ) : questions.length > 0 ? (
             <div className="space-y-4">
               {questions.map((q, i) => (
-                <div key={q.id} className="p-6 bg-white border border-slate-100 rounded-[2rem] flex justify-between items-start group hover:border-amber-200 transition-all shadow-sm">
+                <div key={q.id} className="p-6 bg-white border border-slate-100 rounded-[2.5rem] flex justify-between items-start group hover:border-amber-200 transition-all shadow-sm">
                   <div className="space-y-4 flex-1">
                     <div className="flex items-center gap-3">
                       <span className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-black text-xs">
@@ -210,27 +229,43 @@ export default function QuizModal({ course, onClose }) {
                       </span>
                       <p className="font-bold text-slate-800 text-lg leading-tight">{q.question}</p>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {['a', 'b', 'c', 'd'].map(opt => (
-                        <div 
-                          key={opt}
-                          className={`p-3 rounded-xl text-[10px] font-black uppercase border transition-all ${
-                            q.correct_option === opt 
-                              ? 'bg-green-50 text-green-600 border-green-200' 
-                              : 'bg-slate-50 text-slate-400 border-transparent'
-                          }`}
-                        >
-                          <span className="opacity-50 mr-1">{opt}:</span> {q[`option_${opt}`]}
-                        </div>
-                      ))}
+
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Klik huruf untuk koreksi kunci jawaban:</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {['a', 'b', 'c', 'd'].map(opt => {
+                          const isCorrect = q.correct_option === opt;
+                          return (
+                            <button 
+                              key={opt}
+                              onClick={() => handleQuickUpdateCorrect(q.id, opt)} // Fungsi koreksi cepat
+                              className={`p-3 rounded-xl text-[10px] font-black uppercase border transition-all text-left flex items-center justify-between group/btn ${
+                                isCorrect 
+                                  ? 'bg-green-600 text-white border-green-600 shadow-lg shadow-green-100 scale-[1.02]' 
+                                  : 'bg-slate-50 text-slate-400 border-transparent hover:border-amber-300 hover:bg-white hover:text-amber-600'
+                              }`}
+                            >
+                              <span className="flex items-center">
+                                <span className={`opacity-50 mr-1 ${isCorrect ? 'text-white' : ''}`}>{opt.toUpperCase()}:</span> 
+                                {q[`option_${opt}`]}
+                              </span>
+                              {isCorrect && <CheckCircle2 size={12} className="text-white" />}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleDelete(q.id)}
-                    className="ml-4 p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={() => handleDelete(q.id)}
+                      className="ml-4 p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all border border-transparent hover:border-red-100"
+                      title="Hapus Soal"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
