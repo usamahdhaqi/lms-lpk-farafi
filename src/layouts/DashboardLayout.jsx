@@ -8,46 +8,43 @@ import {
   LogOut, 
   Menu, 
   X, 
-  LayoutDashboard, 
   Users, 
   CreditCard,
   Settings,
   Presentation,
-  ShieldCheck
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false); // State untuk sidebar ciut
   const location = useLocation();
   const navigate = useNavigate();
 
-  // --- LOGIKA MENU DINAMIS BERDASARKAN ROLE ---
   const getMenuItems = () => {
     const role = user?.role;
-
     if (role === 'admin') {
       return [
-        { path: '/admin', label: 'Admin Dashboard', icon: <ShieldCheck size={20} /> },
-        { path: '/admin/payments', label: 'Verifikasi Bayar', icon: <CreditCard size={20} /> },
-        { path: '/admin/users', label: 'Kelola Pengguna', icon: <Users size={20} /> },
-        { path: '/admin/settings', label: 'Pengaturan', icon: <Settings size={20} /> },
+        { path: '/admin', label: 'Dashboard', icon: <ShieldCheck size={22} /> },
+        { path: '/admin/payments', label: 'Verifikasi Bayar', icon: <CreditCard size={22} /> },
+        { path: '/admin/users', label: 'Kelola Pengguna', icon: <Users size={22} /> },
+        { path: '/admin/settings', label: 'Pengaturan', icon: <Settings size={22} /> },
       ];
     } 
-    
     if (role === 'instruktur') {
       return [
-        { path: '/instructor', label: 'Panel Instruktur', icon: <Presentation size={20} /> },
-        { path: '/instructor/my-courses', label: 'Kursus Saya', icon: <BookOpen size={20} /> },
-        { path: '/instructor/students', label: 'Monitoring Siswa', icon: <Users size={20} /> },
+        { path: '/instructor', label: 'Panel Instruktur', icon: <Presentation size={22} /> },
+        { path: '/instructor/my-courses', label: 'Kursus Saya', icon: <BookOpen size={22} /> },
+        { path: '/instructor/students', label: 'Monitoring Siswa', icon: <Users size={22} /> },
       ];
     }
-
-    // Default Role: Siswa
     return [
-      { path: '/dashboard', label: 'Kursus Saya', icon: <BookOpen size={20} /> },
-      { path: '/dashboard/certificates', label: 'Sertifikat', icon: <Award size={20} /> },
-      { path: '/dashboard/profile', label: 'Profil Saya', icon: <User size={20} /> },
+      { path: '/dashboard', label: 'Kursus Saya', icon: <BookOpen size={22} /> },
+      { path: '/dashboard/certificates', label: 'Sertifikat', icon: <Award size={22} /> },
+      { path: '/dashboard/profile', label: 'Profil Saya', icon: <User size={22} /> },
     ];
   };
 
@@ -61,106 +58,115 @@ export default function DashboardLayout() {
     }
   };
 
-  const handleLogoClick = () => {
-    if (user?.role === 'admin') navigate('/admin');
-    else if (user?.role === 'instruktur') navigate('/instructor');
-    else navigate('/dashboard');
-  };
-
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans">
-      {/* SIDEBAR - Desktop & Mobile */}
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans antialiased text-slate-900">
+      {/* SIDEBAR */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 transition-all duration-300 ease-in-out md:relative
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${isCollapsed ? 'md:w-20' : 'md:w-72'}
       `}>
-        <div className="flex flex-col h-full p-6">
-          {/* Logo Section */}
-          <div className="flex items-center justify-between mb-10 px-2">
-            <div onClick={handleLogoClick} className="cursor-pointer hover:opacity-80 transition">
-              <h2 className="text-2xl font-black text-blue-600 tracking-tighter italic">LPK FARAFI</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Learning System</p>
-            </div>
-            <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 text-slate-400">
-              <X size={24} />
+        <div className="flex flex-col h-full">
+          {/* Logo & Toggle */}
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-6 mb-2`}>
+            {!isCollapsed && (
+              <div className="transition-opacity duration-300">
+                <h2 className="text-xl font-black text-blue-600 tracking-tighter italic">LPK FARAFI</h2>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Learning System</p>
+              </div>
+            )}
+            <button 
+              onClick={() => isMobileOpen ? setIsMobileOpen(false) : setIsCollapsed(!isCollapsed)}
+              className="p-2 rounded-xl bg-slate-50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+            >
+              {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} className="hidden md:block" />}
+              <X size={20} className="md:hidden" />
             </button>
           </div>
 
-          {/* User Profile Badge */}
-          <div className="mb-8 p-4 bg-slate-50 rounded-2xl flex items-center gap-3 border border-slate-100">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
-              {user?.name?.charAt(0).toUpperCase()}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-black text-slate-800 truncate">{user?.name}</p>
-              <span className="text-[10px] font-bold text-blue-500 uppercase px-2 py-0.5 bg-blue-50 rounded-md border border-blue-100">
-                {user?.role}
-              </span>
+          {/* User Profile Info */}
+          <div className={`px-4 mb-6 transition-all ${isCollapsed ? 'opacity-0 invisible h-0' : 'opacity-100'}`}>
+            <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md shrink-0">
+                  {user?.name?.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold truncate text-slate-800">{user?.name}</p>
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">{user?.role}</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Navigation Menu */}
-          <nav className="flex-1 space-y-2 overflow-y-auto">
-            <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Menu Utama</p>
+          {/* Navigation */}
+          <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+            {!isCollapsed && (
+              <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 mt-2">Menu</p>
+            )}
             {menuItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsMobileOpen(false)}
-                className={`flex items-center gap-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all duration-200 ${
-                  location.pathname === item.path 
-                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-100 scale-[1.02]' 
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600'
-                }`}
+                className={`
+                  flex items-center gap-4 px-4 py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 group
+                  ${location.pathname === item.path 
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600'}
+                  ${isCollapsed ? 'justify-center px-0' : ''}
+                `}
               >
-                {item.icon}
-                {item.label}
+                <span className={`${location.pathname === item.path ? 'scale-110' : 'group-hover:scale-110'} transition-transform`}>
+                  {item.icon}
+                </span>
+                {!isCollapsed && <span className="truncate">{item.label}</span>}
+                {/* Tooltip for collapsed mode */}
+                {isCollapsed && (
+                  <div className="absolute left-20 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                    {item.label}
+                  </div>
+                )}
               </Link>
             ))}
           </nav>
 
-          {/* Logout Section */}
-          <div className="mt-6 pt-6 border-t border-slate-100">
+          {/* Logout */}
+          <div className="p-3 mt-auto border-t border-slate-100">
             <button 
               onClick={handleLogout} 
-              className="w-full flex items-center gap-4 px-5 py-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all duration-200 group"
+              className={`
+                w-full flex items-center gap-4 px-4 py-3.5 text-red-500 font-bold hover:bg-red-50 rounded-xl transition-all group
+                ${isCollapsed ? 'justify-center px-0' : ''}
+              `}
             >
-              <LogOut size={20} className="group-hover:-translate-x-1 transition-transform" />
-              Keluar Sistem
+              <LogOut size={22} className="group-hover:-translate-x-1 transition-transform" />
+              {!isCollapsed && <span>Keluar</span>}
             </button>
           </div>
         </div>
       </aside>
 
-      {/* OVERLAY (Mobile Only) */}
+      {/* OVERLAY */}
       {isMobileOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setIsMobileOpen(false)}
-        ></div>
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-40 md:hidden" onClick={() => setIsMobileOpen(false)}></div>
       )}
 
-      {/* MAIN CONTENT AREA */}
+      {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Mobile Topbar */}
-        <header className="bg-white border-b border-slate-200 p-4 flex justify-between items-center md:hidden shrink-0">
-           <div className="flex items-center gap-3">
-             <button 
-               onClick={() => setIsMobileOpen(true)}
-               className="p-2 bg-slate-50 rounded-xl text-slate-600"
-             >
-               <Menu size={24} />
-             </button>
-             <h2 className="font-black text-blue-600 tracking-tighter italic">LPK FARAFI</h2>
-           </div>
-           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white text-xs">
+        {/* Topbar Mobile */}
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 flex justify-between items-center md:hidden shrink-0">
+           <button onClick={() => setIsMobileOpen(true)} className="p-2 bg-slate-50 rounded-xl text-slate-600"><Menu size={24} /></button>
+           <h2 className="font-black text-blue-600 italic">LPK FARAFI</h2>
+           <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white text-xs shadow-sm">
              {user?.name?.charAt(0).toUpperCase()}
            </div>
         </header>
 
-        {/* Content Outlet */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-10 scroll-smooth bg-slate-50/50">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-12 scroll-smooth">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
