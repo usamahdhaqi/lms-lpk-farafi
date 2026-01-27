@@ -24,7 +24,17 @@ export default function CertificatePage() {
     if (user) fetchCertificates();
   }, [user]);
 
-  const downloadPDF = (cert) => {
+  // Fungsi untuk memuat gambar secara asinkron
+  const loadImage = (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => resolve(img);
+      img.onerror = (err) => reject(err);
+    });
+  };
+
+  const downloadPDF = async (cert) => {
     const doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
@@ -91,7 +101,7 @@ export default function CertificatePage() {
 
     // --- 3. JUDUL SERTIFIKAT ---
     centeredText('CERTIFICATE', 65, 42, 5, 'bold', 'helvetica', [197, 160, 89]);
-    centeredText('OF ACHIEVEMENT', 73, 14, 10, 'normal', 'helvetica', [71, 85, 105]);
+    centeredText('OF ACHIEVEMENT', 73, 14, 4, 'normal', 'helvetica', [71, 85, 105]);
 
     // --- 4. ISI ---
     centeredText('Dengan bangga diberikan kepada:', 90, 12, 0, 'italic', 'helvetica', [100, 100, 100]);
@@ -123,19 +133,26 @@ export default function CertificatePage() {
     doc.setFont("helvetica", "normal");
     doc.text('ID: ' + cert.cert_id.toString().padStart(8, '0'), 46, 186, { align: 'center' });
 
-    // Gold Seal (Tengah)
-    // Membuat efek gerigi sederhana dengan dua lingkaran bertumpuk
-    doc.setFillColor(197, 160, 89);
-    doc.circle(width / 2, 172, 13, 'F');
-    doc.setDrawColor(255, 255, 255);
-    doc.setLineWidth(0.5);
-    doc.circle(width / 2, 172, 11, 'S');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(6);
-    doc.setFont("helvetica", "bold");
-    doc.text('CERTIFIED', width / 2, 171, { align: 'center' });
-    doc.text('QUALITY', width / 2, 174, { align: 'center' });
+    try {
+        // Path logo sesuai permintaan Anda
+        const logoPath = '/logo-lpk.png'; 
+        const logoImg = await loadImage(logoPath);
+        
+        const logoSize = 30; // Ukuran logo dalam mm
+        const xPos = (width / 2) - (logoSize / 2);
+        const yPos = 158; // Menyesuaikan posisi vertikal agar sejajar tanda tangan
+
+        // Menambahkan gambar logo
+        doc.addImage(logoImg, 'JPEG', xPos, yPos, logoSize, logoSize); 
+    } catch (error) {
+        console.error("Gagal memuat logo, menggunakan fallback seal emas.");
+        // Jika logo gagal dimuat, sistem otomatis menggambar seal emas sebagai cadangan
+        doc.setFillColor(197, 160, 89);
+        doc.circle(width / 2, 172, 13, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(6);
+        doc.text('CERTIFIED', width / 2, 171, { align: 'center' });
+    }
 
     // Tanda Tangan (Kanan)
     doc.setTextColor(15, 23, 42);

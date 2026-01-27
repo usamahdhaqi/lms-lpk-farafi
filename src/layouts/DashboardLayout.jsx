@@ -20,7 +20,8 @@ import {
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false); // State untuk sidebar ciut
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -134,7 +135,7 @@ export default function DashboardLayout() {
           {/* Logout */}
           <div className="p-3 mt-auto border-t border-slate-100">
             <button 
-              onClick={handleLogout} 
+              onClick={() => setShowLogoutModal(true)}
               className={`
                 w-full flex items-center gap-4 px-4 py-3.5 text-red-500 font-bold hover:bg-red-50 rounded-xl transition-all group
                 ${isCollapsed ? 'justify-center px-0' : ''}
@@ -169,6 +170,58 @@ export default function DashboardLayout() {
           </div>
         </main>
       </div>
+
+      {/* --- MODAL KONFIRMASI LOGOUT --- */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+          {/* Overlay Backdrop */}
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => setShowLogoutModal(false)}
+          ></div>
+
+          {/* Modal Content */}
+          <div className="relative bg-white w-full max-w-sm rounded-[3rem] shadow-2xl p-10 text-center animate-in zoom-in-95 duration-300 overflow-hidden">
+            {/* Aksen Merah di Atas */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-red-500"></div>
+
+            {/* Ikon Utama */}
+            <div className="w-24 h-24 mx-auto mb-6 rounded-[2rem] bg-red-50 text-red-500 flex items-center justify-center shadow-lg transform -rotate-3">
+              <LogOut size={48} />
+            </div>
+
+            {/* Teks Deskripsi */}
+            <h3 className="text-2xl font-black text-slate-800 uppercase italic leading-tight">
+              Akhiri Sesi?
+            </h3>
+            
+            <p className="text-slate-500 mt-4 font-medium leading-relaxed">
+              Apakah Anda yakin ingin keluar <br/>
+              dari <span className="font-bold text-slate-800 underline decoration-red-200 text-sm">Dashboard LPK Farafi?</span>
+            </p>
+
+            {/* Tombol Aksi */}
+            <div className="mt-10 flex flex-col gap-3">
+              <button 
+                onClick={() => {
+                  setShowLogoutModal(false);
+                  logout();
+                }}
+                className="w-full py-5 bg-red-500 text-white rounded-[2rem] font-black shadow-xl shadow-red-100 hover:bg-red-600 transition-all active:scale-95 uppercase tracking-widest text-xs italic"
+              >
+                YA, KELUAR SEKARANG
+              </button>
+              
+              <button 
+                onClick={() => setShowLogoutModal(false)}
+                className="w-full py-5 bg-slate-100 text-slate-500 rounded-[2rem] font-black hover:bg-slate-200 transition-all active:scale-95 uppercase tracking-widest text-[10px]"
+              >
+                TETAP DI SINI
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
